@@ -27,13 +27,13 @@ validity = np.full((9, 9, 9), True)
 board = np.zeros((9, 9), dtype=int)
 invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
-boxes = [(0, 3), (3, 6), (6, 9)]
+boxes = [{0:3}, {3:6}, {6:9}]  # change all instances of this list 
 
 
 def lock(arg):  # Still fucked
     if arg:
         print(board)
-        locked_cells = board != 0
+        locked_cells = (board != 0)  # Idk if the parenthesis will work but its just an idea, test it :)
         print(locked_cells)
 
 
@@ -49,10 +49,10 @@ def validity_undo(coordinates: tuple):  # I think this is done
             if not any(board[x, :] == i + 1) or not any(board[:, y] == i + 1):
                 validity[x, y, i] = True
         box_x, box_y = int(x / 3), int(y / 3)
-        if np.sum(temp_board.mask[boxes[box_x][0]: boxes[box_x][1], boxes[box_y][0]: boxes[box_y][1]]) < 8:
-            validity[boxes[box_x][0]: boxes[box_x][1], boxes[box_y][0]: boxes[box_y][1], board[coordinates] - 1] = False
+        if np.sum(temp_board.mask[boxes[box_x], boxes[box_y]]) < 8:
+            validity[boxes[box_x], boxes[box_y], board[coordinates] - 1] = False
         else:
-            validity[boxes[box_x][0]: boxes[box_x][1], boxes[box_y][0]: boxes[box_y][1], board[coordinates] - 1] = True
+            validity[boxes[box_x], boxes[box_y], board[coordinates] - 1] = True
         if invalids[coordinates]:
             invalids[coordinates] = False
 
@@ -66,7 +66,7 @@ def validity_do(coordinates: tuple, num: int):
         validity[:, y, num - 1] = False
         validity[x, y, :] = False
         box_x, box_y = int(x / 3), int(y / 3)
-        validity[boxes[box_x][0]: boxes[box_x][1], boxes[box_y][0]: boxes[box_y][1], num - 1] = False
+        validity[boxes[box_x], boxes[box_y], num - 1] = False
 
 
 def num_update(coordinates: tuple, num: int):
@@ -93,7 +93,7 @@ def solve():
                 if avalible_row[y, z] == 1:
                     print("Only place in row")
                     print(validity[:, y, z])
-                    num_update((np.where(validity[:, y, z] != 0)[0][0], y), z + 1)
+                    num_update((np.where(validity[:, y, z] != 0)[0][0], y), z + 1)  # swap the np.where to y position and put y in the x position, that might be able to fix
                     update = True
         avalible_column = np.count_nonzero(validity, axis=0)
         for x in range(9):
@@ -104,6 +104,14 @@ def solve():
                     print(validity[x, :, z])
                     num_update((x, np.where(validity[x, :, z] != 0)[0][0]), z + 1)
                     update = True
+        for x in range(3):
+            for y in range(3):
+                for z in range(9):
+                    if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
+                        coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
+                        num_update((coords[0][0], coords[0][1]), z + 1)
+  # DUCES :(
+
 
 
 def num_draw(num_font):
