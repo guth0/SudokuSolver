@@ -32,9 +32,7 @@ locked_cells = np.full((9, 9), False)
 
 def lock(arg):  # Still fucked
     if arg:
-        print(board)
-        locked_cells = (board != 0)  # Idk if the parenthesis will work but its just an idea, test it :)
-        print(locked_cells)
+        locked_cells = np.where(board == 0, board, 1)
 
 
 def validity_undo(coordinates: tuple):
@@ -72,10 +70,9 @@ def validity_do(coordinates: tuple, num: int):
 
 
 def num_update(coordinates: tuple, num: int):
-    if not locked_cells[coordinates]:
-        validity_undo(coordinates)
-        board[coordinates] = num
-        validity_do(coordinates, num)
+    validity_undo(coordinates)
+    board[coordinates] = num
+    validity_do(coordinates, num)
 
 
 def solve():  # This is not working at fucking all
@@ -113,9 +110,6 @@ def solve():  # This is not working at fucking all
         #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
         #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
-
-
-# DUCES :(
 
 
 def num_draw(num_font):
