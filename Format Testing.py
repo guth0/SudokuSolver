@@ -1,7 +1,5 @@
 # TODO:
-#  Fix last 2 in solve
-#  Fix lock (colors and locking the numbers)
-#  Adding/subtracting validity might be fucked
+#  Solve is not working
 
 import pygame
 import time
@@ -30,12 +28,7 @@ invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
 
 
-def lock(arg):  # Still fucked
-    if arg:
-        locked_cells = np.where(board == 0, board, 1)
-
-
-def validity_undo(coordinates: tuple):
+def validity_undo(coordinates: tuple) -> None:
     if board[coordinates]:
         temp_board = ma.masked_where(board != board[coordinates], board, True)
         x, y = coordinates
@@ -57,7 +50,7 @@ def validity_undo(coordinates: tuple):
             invalids[coordinates] = False
 
 
-def validity_do(coordinates: tuple, num: int):
+def validity_do(coordinates: tuple, num: int) -> None:
     if num:
         x, y = coordinates
         if not validity[(num - 1,) + (coordinates)]:
@@ -69,17 +62,17 @@ def validity_do(coordinates: tuple, num: int):
         validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
 
 
-def num_update(coordinates: tuple, num: int):
+def num_update(coordinates: tuple, num: int) -> None:
     validity_undo(coordinates)
     board[coordinates] = num
     validity_do(coordinates, num)
 
 
-def solve():  # This is not working at fucking all
+def solve() -> None:  # This is not working at fucking all
     update = True
     while update:
         update = False
-        compressed = np.count_nonzero(validity, axis=1)
+        compressed = np.count_nonzero(validity, axis=0)
         cell_solve = np.where(compressed == 1)  # all of these need to be changed
         size = cell_solve[0].size
         if size:
@@ -112,7 +105,7 @@ def solve():  # This is not working at fucking all
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
-def num_draw(num_font):
+def num_draw(num_font) -> None:
     for x in range(9):
         for y in range(9):
             if board[x, y]:
@@ -128,7 +121,7 @@ def num_draw(num_font):
                 WIN.blit(text_surface, (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
 
 
-def draw_main():
+def draw_main() -> None:
     for x in range(0, WIN_PIXELS, CELL_SIZE):
         for y in range(Y_SPACE, WIN_PIXELS + Y_SPACE, CELL_SIZE):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
@@ -143,7 +136,7 @@ def draw_main():
     WIN.blit(text_surface, (WIN_PIXELS - fps_offset, 0))
 
 
-def validity_draw():
+def validity_draw() -> None:
     if np.any(invalids):
         invalid_list = np.where(invalids)
         invalid_list = list(zip(invalid_list[0], invalid_list[1]))
@@ -153,13 +146,16 @@ def validity_draw():
                 pygame.draw.rect(WIN, L_RED, (x, y, CELL_SIZE - 1, CELL_SIZE - 1))
 
 
-def movement(keys, local_x, local_y):
+def movement(keys, local_x: int, local_y: int) -> tuple[int]:
+    move = [True] * 4
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
         local_x = 0
     elif keys[pygame.K_a] and local_x > 0:
         local_x -= CELL_SIZE
+    else:
+        move[0] = False
 
     if keys[pygame.K_d] and keys[pygame.K_SPACE] and local_x < WIN_PIXELS - BOX_SIZE:
         local_x += BOX_SIZE
@@ -167,6 +163,8 @@ def movement(keys, local_x, local_y):
         local_x = 640
     elif keys[pygame.K_d] and local_x < WIN_PIXELS - CELL_SIZE:
         local_x += CELL_SIZE
+    else:
+        move[1] = False
 
     if keys[pygame.K_w] and keys[pygame.K_SPACE] and local_y > BOX_SIZE + Y_SPACE:
         local_y -= BOX_SIZE
@@ -174,6 +172,8 @@ def movement(keys, local_x, local_y):
         local_y = Y_SPACE
     elif keys[pygame.K_w] and local_y > Y_SPACE:
         local_y -= CELL_SIZE
+    else:
+        move[2] = False
 
     if keys[pygame.K_s] and keys[pygame.K_SPACE] and local_y < WIN_PIXELS - BOX_SIZE:
         local_y += BOX_SIZE
@@ -181,12 +181,13 @@ def movement(keys, local_x, local_y):
         local_y = 640 + Y_SPACE
     elif keys[pygame.K_s] and local_y < WIN_PIXELS + Y_SPACE - CELL_SIZE:
         local_y += CELL_SIZE
-        moved = True
+    else:
+        move[3] = False
 
-    if any(keys):
+    if any(move):
         time.sleep(.09)
 
-    return [local_x, local_y]
+    return (local_x, local_y)
 
 
 def main():
@@ -210,7 +211,8 @@ def main():
                     invalids.fill(False), locked_cells.fill(False), board.fill(0), validity.fill(True)
                 elif event.text == "c":
                     is_locked = not is_locked
-                    lock(is_locked)
+                    if is_locked:
+                        locked_cells = (board != 0)
                 elif event.text == "t":
                     solve()
 
@@ -235,3 +237,14 @@ def main():
 
 
 main()
+
+'''
+array([[4, 0, 9, 0, 7, 2, 0, 1, 3],
+       [7, 0, 2, 8, 3, 0, 6, 0, 0],
+       [0, 1, 6, 0, 4, 9, 8, 7, 0],
+       [2, 0, 0, 1, 0, 0, 0, 6, 0],
+       [5, 4, 7, 0, 0, 0, 2, 0, 0],
+       [6, 9, 0, 0, 0, 4, 0, 3, 5],
+       [8, 0, 3, 4, 0, 0, 0, 0, 6],
+       [0, 0, 0, 0, 0, 3, 1, 0, 0],
+       [0, 6, 0, 9, 0, 0, 0, 4, 0]])'''
