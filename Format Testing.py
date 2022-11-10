@@ -1,5 +1,5 @@
 # TODO:
-#  Solve is not working
+#  The bastard is validlity remove
 
 import pygame
 import time
@@ -28,7 +28,7 @@ invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
 
 
-def validity_undo(coordinates: tuple) -> None:
+def validity_undo(coordinates: tuple) -> None:  # Bastard code
     if board[coordinates]:
         temp_board = ma.masked_where(board != board[coordinates], board, True)
         x, y = coordinates
@@ -70,33 +70,33 @@ def num_update(coordinates: tuple, num: int) -> None:
 
 def solve() -> None:  # This is not working at fucking all
     update = True
-    while update:
-        update = False
-        compressed = np.count_nonzero(validity, axis=0)
-        cell_solve = np.where(compressed == 1)  # all of these need to be changed
-        size = cell_solve[0].size
-        if size:
-            for i in range(size):
-                x, y = cell_solve[0][i], cell_solve[1][i]
-                if not board[x, y]:  # Shouldnt have to do this :(
-                    num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
-                    update = True
-        compressed = np.count_nonzero(validity, axis=1)
-        row_solve = np.where(compressed == 1)
-        size = row_solve[0].size
-        if size:  # columns
-            for i in range(size):
-                z, y = row_solve[0][i], row_solve[1][i]
-                num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
+    # while update:
+    update = False
+    compressed = np.count_nonzero(validity, axis=0)
+    cell_solve = np.where(compressed == 1)  # all of these need to be changed
+    size = cell_solve[0].size
+    if size:
+        for i in range(size):
+            x, y = cell_solve[0][i], cell_solve[1][i]
+            if not board[x, y]:  # Shouldnt have to do this :(
+                num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
                 update = True
-        compressed = np.count_nonzero(validity, axis=2)
-        column_solve = np.where(compressed == 1)
-        size = column_solve[0].size
-        if size:
-            for i in range(size):
-                z, x = column_solve[0][i], column_solve[1][i]
-                num_update((x, np.where(validity[z, x, :] != 0)[0][0]), z + 1)
-                update = True
+    compressed = np.count_nonzero(validity, axis=1)
+    row_solve = np.where(compressed == 1)
+    size = row_solve[0].size
+    if size:  # columns
+        for i in range(size):
+            z, y = row_solve[0][i], row_solve[1][i]
+            num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
+            update = True
+    compressed = np.count_nonzero(validity, axis=2)
+    column_solve = np.where(compressed == 1)
+    size = column_solve[0].size
+    if size:
+        for i in range(size):
+            z, x = column_solve[0][i], column_solve[1][i]
+            num_update((x, np.where(validity[z, x, :] != 0)[0][0]), z + 1)
+            update = True
         # for x in range(3):
         #     for y in range(3):
         #         for z in range(9):
