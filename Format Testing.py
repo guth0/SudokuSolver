@@ -188,7 +188,7 @@ def movement(keys, local_x, local_y):
     if any(keys):
         time.sleep(.09)
 
-    return [local_x, local_y]
+    return (local_x, local_y)  # Tuple is smaller and faster
 
 
 def main():
