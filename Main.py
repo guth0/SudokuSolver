@@ -118,7 +118,7 @@ def solve() -> None:
         # for x in range(3):
         #     for y in range(3):
         #         for z in range(9):
-        #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
+        #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:
         #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
