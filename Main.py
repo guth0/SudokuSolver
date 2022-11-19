@@ -71,7 +71,7 @@ def validity_undo(coordinates: tuple) -> None:  # Bastard code
 def validity_do(coordinates: tuple, num: int) -> None:
     if num:
         x, y = coordinates
-        if not validity[(num - 1,) + (coordinates)]:
+        if not validity[(num - 1,) + coordinates]:
             invalids[coordinates] = True
         validity[num - 1, x, :] = False
         validity[num - 1, :, y] = False
@@ -164,7 +164,7 @@ def validity_draw() -> None:
                 pygame.draw.rect(WIN, L_RED, (x, y, CELL_SIZE - 1, CELL_SIZE - 1))
 
 
-def movement(keys, local_x: int, local_y: int) -> tuple[int]:
+def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
     move = [True] * 4
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
@@ -205,7 +205,7 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int]:
     if any(move):
         time.sleep(.09)
 
-    return (local_x, local_y)
+    return local_x, local_y
 
 
 def main():
