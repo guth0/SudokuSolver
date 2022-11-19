@@ -6,7 +6,7 @@ pygame.font.init()
 
 WIN_PIXELS, Y_SPACE = 720, 120
 WIN = pygame.display.set_mode((WIN_PIXELS, WIN_PIXELS + Y_SPACE))
-pygame.display.set_caption("Sudoku")
+pygame.display.set_caption("Feature testing")
 ICON = pygame.image.load('Sudoku Icon.png')
 TITLE = "Testing 1"
 pygame.display.set_icon(ICON)
