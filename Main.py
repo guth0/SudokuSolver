@@ -29,43 +29,35 @@ invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
 
 
-def validity_undo(coordinates: tuple) -> None:  # Bastard code
+def validity_undo(coordinates: tuple) -> None:
     if board[coordinates]:
-        temp_board = ma.masked_where(board == board[coordinates], board, True)
+        value = board[coordinates]
+        temp_board = ma.masked_where(board == value, board, True)
         x, y = coordinates
+        box_x, box_y = x // 3 * 3, y // 3 * 3
+        look=np.zeros((3,3,9,9), dtype=bool)
+        for i in range(3):
+            for j in range(3):
+                look[i,j,i*3:(i+1)*3,j*3:(j+1)*3] = True
+        boxes = np.einsum('ijkl,kl', look, board==value)
         for i in range(9):
             if not any(board[x, :] == i + 1) and not any(board[:, y] == i + 1):
                 validity[i, x, y] = True
         for i in range(9):
-            if any(temp_board.mask[:, i]) and not board[x, i]:
-                validity[board[coordinates] - 1, x, i] = True
-            if any(temp_board.mask[i, :]) and not board[i, y]:
-                validity[board[coordinates] - 1, i, y] = True
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-        if np.any(temp_board.mask[box_x:box_x + 3, box_y:box_y + 3]):
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = False
+            if any(temp_board.mask[:, i]) and not board[x, i] and not boxes[x//3, i//3]:
+                validity[value - 1, x, i] = True
+            if any(temp_board.mask[i, :]) and not board[i, y] and not boxes[i//3, y//3]:
+                validity[value - 1, i, y] = True
+        if boxes[box_x, box_y]:
+            validity[value - 1, box_x:box_x + 3, box_y:box_y + 3] = False
         else:
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = True
+            row_check = [any(temp_board.mask[(box_x*3)+i, :]) for i in range(3)] 
+            col_check = [any(temp_board.mask[:, (box_y*3)+i]) for i in range(3)]
+            for x in range(3):
+                for y in range(3):
+                    validity[value - 1, x, y] = not row_check[x] and not col_check[y]
         if invalids[coordinates]:
             invalids[coordinates] = False
-
-    # if board[coordinates]:
-    #     x, y = coordinates
-    #     for i in range(9):
-    #         if not any(board[x, :] == i + 1) and not any(board[:, y] == i + 1):
-    #             validity[i, x, y] = True
-    #     for i in range(9):
-    #         if any((board != board[coordinates])[:, i]) and not board[x, i]:
-    #             validity[board[coordinates] - 1, x, i] = True
-    #         if any((board != board[coordinates])[i, :]) and not board[i, y]:
-    #             validity[board[coordinates] - 1, i, y] = True
-    #     box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-    #     if np.any((board != board[coordinates])[box_x:box_x + 3, box_y:box_y + 3]):
-    #         validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-    #     else:
-    #         validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = True
-    #     if invalids[coordinates]:
-    #         invalids[coordinates] = False
 
 
 def validity_do(coordinates: tuple, num: int) -> None:
