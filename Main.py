@@ -138,7 +138,7 @@ def validity_draw() -> None:
 
 def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
     move = [True] * 4
-
+    
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
