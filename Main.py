@@ -1,11 +1,9 @@
 # TODO:
-#  SOLVE WORKS!!!!!
-#  validity_undo is SHIT
+#  user inputs are different color before solve, then change to black for locked, and all solve() are grey
+#  when user inputs a number, check if invalid
 
 import pygame
-import time
 import numpy as np
-import numpy.ma as ma
 
 pygame.init()
 pygame.font.init()
@@ -14,7 +12,7 @@ WIN_PIXELS, Y_SPACE = 720, 120
 WIN = pygame.display.set_mode((WIN_PIXELS, WIN_PIXELS + Y_SPACE))
 pygame.display.set_caption("Sudoku")
 ICON = pygame.image.load("Sudoku Icon.png")
-TITLE = "Format Testing"
+TITLE = "MAIN"
 pygame.display.set_icon(ICON)
 WHITE, BLACK, BLUE, GREY = (255, 255, 255), (0, 0, 0), (0, 0, 255), (205, 205, 205)
 L_RED, D_RED, PALE_BLUE, D_GREY = (255, 200, 200), (255, 0, 0), (120, 150, 210), (85, 85, 85)
@@ -29,45 +27,6 @@ invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
 
 
-def validity_undo(coordinates: tuple) -> None:  # Bastard code
-    if board[coordinates]:
-        temp_board = ma.masked_where(board == board[coordinates], board, True)
-        x, y = coordinates
-        for i in range(9):
-            if not any(board[x, :] == i + 1) and not any(board[:, y] == i + 1):
-                validity[i, x, y] = True
-        for i in range(9):
-            if any(temp_board.mask[:, i]) and not board[x, i]:
-                validity[board[coordinates] - 1, x, i] = True
-            if any(temp_board.mask[i, :]) and not board[i, y]:
-                validity[board[coordinates] - 1, i, y] = True
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-        if np.any(temp_board.mask[box_x:box_x + 3, box_y:box_y + 3]):
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-        else:
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = True
-        if invalids[coordinates]:
-            invalids[coordinates] = False
-
-    # if board[coordinates]:
-    #     x, y = coordinates
-    #     for i in range(9):
-    #         if not any(board[x, :] == i + 1) and not any(board[:, y] == i + 1):
-    #             validity[i, x, y] = True
-    #     for i in range(9):
-    #         if any((board != board[coordinates])[:, i]) and not board[x, i]:
-    #             validity[board[coordinates] - 1, x, i] = True
-    #         if any((board != board[coordinates])[i, :]) and not board[i, y]:
-    #             validity[board[coordinates] - 1, i, y] = True
-    #     box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-    #     if np.any((board != board[coordinates])[box_x:box_x + 3, box_y:box_y + 3]):
-    #         validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-    #     else:
-    #         validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = True
-    #     if invalids[coordinates]:
-    #         invalids[coordinates] = False
-
-
 def validity_do(coordinates: tuple, num: int) -> None:
     if num:
         x, y = coordinates
@@ -76,12 +35,26 @@ def validity_do(coordinates: tuple, num: int) -> None:
         validity[num - 1, x, :] = False
         validity[num - 1, :, y] = False
         validity[:, x, y] = False
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
+        box_x, box_y = x // 3 * 3, y // 3 * 3
         validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
 
 
+def board_validity(array) -> None:
+    for x in range(9):
+        for y in range(9):
+            validity_do((x, y), array[x][y])
+
+
+def check(coordinates: tuple[int, int], value: int) -> bool:
+    if value:
+        x, y = coordinates
+        box_x, box_y = x // 3 * 3, y // 3 * 3
+        return any(board[x, :] == value) or any(board[:, y] == value) or np.any(
+            board[box_x:box_x + 3, box_y:box_y + 3] == value)
+    return False
+
+
 def num_update(coordinates: tuple, num: int) -> None:
-    validity_undo(coordinates)
     board[coordinates] = num
     validity_do(coordinates, num)
 
@@ -98,7 +71,7 @@ def solve() -> None:
                 x, y = cell_solve[0][i], cell_solve[1][i]
                 num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
                 update = True
-        compressed = np.count_nonzero(validity, axis=1)  # Each column represents a row and each row represents a number
+        compressed = np.count_nonzero(validity, axis=1)
         row_solve = np.where(compressed == 1)
         size = row_solve[0].size
         if size:  # columns
@@ -106,8 +79,7 @@ def solve() -> None:
                 z, y = row_solve[0][i], row_solve[1][i]
                 num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
                 update = True
-        compressed = np.count_nonzero(validity,
-                                      axis=2)  # Each column represents a column and each row represents a number
+        compressed = np.count_nonzero(validity, axis=2)
         column_solve = np.where(compressed == 1)
         size = column_solve[0].size
         if size:
@@ -166,6 +138,7 @@ def validity_draw() -> None:
 
 def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
     move = [True] * 4
+
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
@@ -203,7 +176,7 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
         move[3] = False
 
     if any(move):
-        time.sleep(.09)
+        clock.tick(10)
 
     return local_x, local_y
 
@@ -224,14 +197,19 @@ def main():
                 run = False
             elif event.type == pygame.TEXTINPUT:
                 if event.text in "0123456789" and not locked_cells[cell_x, cell_y]:
-                    num_update((cell_x, cell_y), int(event.text))
+                    invalids[cell_x, cell_y] = check((cell_x, cell_y), int(event.text))
+                    board[cell_x, cell_y] = int(event.text)
                 elif event.text == "n":
                     invalids.fill(False), locked_cells.fill(False), board.fill(0), validity.fill(True)
-                elif event.text == "c":
+                    is_locked = False
+                elif event.text == "t":
+                    validity.fill(True)
+                    for x in range(9):
+                        for y in range(9):
+                            validity_do((x, y), board[x][y])
                     is_locked = not is_locked
                     if is_locked:
                         locked_cells = (board != 0)
-                elif event.text == "t":
                     solve()
                 elif event.text == "z":
                     game = [[0, 3, 1, 6, 7, 0, 0, 0, 0],
