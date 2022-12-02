@@ -1,19 +1,9 @@
 # TODO:
-<<<<<<<<< Temporary merge branch 1
-#  SOLVE WORKS!!!!!
-#  validity_undo is SHIT
-
-import pygame
-import time
-import numpy as np
-import numpy.ma as ma
-=========
 #  user inputs are different color before solve, then change to black for locked, and all solve() are grey
-#  when user inputs a number, check if invalid
+#  add cell colors
 
 import pygame
 import numpy as np
->>>>>>>>> Temporary merge branch 2
 
 pygame.init()
 pygame.font.init()
@@ -22,11 +12,7 @@ WIN_PIXELS, Y_SPACE = 720, 120
 WIN = pygame.display.set_mode((WIN_PIXELS, WIN_PIXELS + Y_SPACE))
 pygame.display.set_caption("Sudoku")
 ICON = pygame.image.load("Sudoku Icon.png")
-<<<<<<<<< Temporary merge branch 1
-TITLE = "Format Testing"
-=========
 TITLE = "MAIN"
->>>>>>>>> Temporary merge branch 2
 pygame.display.set_icon(ICON)
 WHITE, BLACK, BLUE, GREY = (255, 255, 255), (0, 0, 0), (0, 0, 255), (205, 205, 205)
 L_RED, D_RED, PALE_BLUE, D_GREY = (255, 200, 200), (255, 0, 0), (120, 150, 210), (85, 85, 85)
@@ -35,66 +21,21 @@ cell_x, cell_y, player_x, player_y, FPS = 0, 0, 0, 0, 60
 is_locked = False
 FPS_FONT = pygame.font.SysFont('arial', 15)
 clock = pygame.time.Clock()
-validity = np.full((9, 9, 9), True)
+validity = np.ones((9, 9), dtype=bool)
 board = np.zeros((9, 9), dtype=int)
-invalids = np.full((9, 9), False)
-locked_cells = np.full((9, 9), False)
+invalids = np.zeros((9, 9), dtype=bool)
+locked_cells = np.zeros((9, 9), dtype=bool)
+colors = np.zeros((9, 9), dtype=tuple)
 
 
-<<<<<<<<< Temporary merge branch 1
-def validity_undo(coordinates: tuple) -> None:
-    if board[coordinates]:
-        value = board[coordinates]
-        temp_board = ma.masked_where(board == value, board, True)
-        x, y = coordinates
-        box_x, box_y = x // 3 * 3, y // 3 * 3
-        look=np.zeros((3,3,9,9), dtype=bool)
-        for i in range(3):
-            for j in range(3):
-                look[i,j,i*3:(i+1)*3,j*3:(j+1)*3] = True
-        boxes = np.einsum('ijkl,kl', look, board==value)
-        for i in range(9):
-            if not any(board[x, :] == i + 1) and not any(board[:, y] == i + 1):
-                validity[i, x, y] = True
-        for i in range(9):
-            if any(temp_board.mask[:, i]) and not board[x, i] and not boxes[x//3, i//3]:
-                validity[value - 1, x, i] = True
-            if any(temp_board.mask[i, :]) and not board[i, y] and not boxes[i//3, y//3]:
-                validity[value - 1, i, y] = True
-        if boxes[box_x, box_y]:
-            validity[value - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-        else:
-            row_check = [any(temp_board.mask[(box_x*3)+i, :]) for i in range(3)] 
-            col_check = [any(temp_board.mask[:, (box_y*3)+i]) for i in range(3)]
-            for x in range(3):
-                for y in range(3):
-                    validity[value - 1, x, y] = not row_check[x] and not col_check[y]
-        if invalids[coordinates]:
-            invalids[coordinates] = False
-
-
-def validity_do(coordinates: tuple, num: int) -> None:
-    if num:
-        x, y = coordinates
-        if not validity[(num - 1,) + (coordinates)]:
-=========
 def validity_do(coordinates: tuple, num: int) -> None:
     if num:
         x, y = coordinates
         if not validity[(num - 1,) + coordinates]:
->>>>>>>>> Temporary merge branch 2
             invalids[coordinates] = True
         validity[num - 1, x, :] = False
         validity[num - 1, :, y] = False
         validity[:, x, y] = False
-<<<<<<<<< Temporary merge branch 1
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-        validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-
-
-def num_update(coordinates: tuple, num: int) -> None:
-    validity_undo(coordinates)
-=========
         box_x, box_y = x // 3 * 3, y // 3 * 3
         validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
 
@@ -115,7 +56,6 @@ def check(coordinates: tuple[int, int], value: int) -> bool:
 
 
 def num_update(coordinates: tuple, num: int) -> None:
->>>>>>>>> Temporary merge branch 2
     board[coordinates] = num
     validity_do(coordinates, num)
 
@@ -124,7 +64,7 @@ def solve() -> None:
     update = True
     while update:
         update = False
-        compressed = np.count_nonzero(validity, axis=0)
+        compressed = np.einsum("ijk -> jk", validity.astype(int))
         cell_solve = np.where(compressed == 1)
         size = cell_solve[0].size
         if size:
@@ -132,11 +72,7 @@ def solve() -> None:
                 x, y = cell_solve[0][i], cell_solve[1][i]
                 num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
                 update = True
-<<<<<<<<< Temporary merge branch 1
-        compressed = np.count_nonzero(validity, axis=1)  # Each column represents a row and each row represents a number
-=========
-        compressed = np.count_nonzero(validity, axis=1)
->>>>>>>>> Temporary merge branch 2
+        compressed = np.einsum("ijk -> ik", validity.astype(int))
         row_solve = np.where(compressed == 1)
         size = row_solve[0].size
         if size:  # columns
@@ -144,12 +80,7 @@ def solve() -> None:
                 z, y = row_solve[0][i], row_solve[1][i]
                 num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
                 update = True
-<<<<<<<<< Temporary merge branch 1
-        compressed = np.count_nonzero(validity,
-                                      axis=2)  # Each column represents a column and each row represents a number
-=========
-        compressed = np.count_nonzero(validity, axis=2)
->>>>>>>>> Temporary merge branch 2
+        compressed = np.einsum("ijk -> ij", validity.astype(int))
         column_solve = np.where(compressed == 1)
         size = column_solve[0].size
         if size:
@@ -160,11 +91,7 @@ def solve() -> None:
         # for x in range(3):
         #     for y in range(3):
         #         for z in range(9):
-<<<<<<<<< Temporary merge branch 1
-        #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
-=========
         #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:
->>>>>>>>> Temporary merge branch 2
         #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
@@ -210,14 +137,9 @@ def validity_draw() -> None:
                 pygame.draw.rect(WIN, L_RED, (x, y, CELL_SIZE - 1, CELL_SIZE - 1))
 
 
-<<<<<<<<< Temporary merge branch 1
-def movement(keys, local_x: int, local_y: int) -> tuple[int]:
-    move = [True] * 4
-=========
 def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
     move = [True] * 4
 
->>>>>>>>> Temporary merge branch 2
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
@@ -255,15 +177,9 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
         move[3] = False
 
     if any(move):
-<<<<<<<<< Temporary merge branch 1
-        time.sleep(.09)
-
-    return (local_x, local_y)
-=========
         clock.tick(10)
 
     return local_x, local_y
->>>>>>>>> Temporary merge branch 2
 
 
 def main():
@@ -282,16 +198,6 @@ def main():
                 run = False
             elif event.type == pygame.TEXTINPUT:
                 if event.text in "0123456789" and not locked_cells[cell_x, cell_y]:
-<<<<<<<<< Temporary merge branch 1
-                    num_update((cell_x, cell_y), int(event.text))
-                elif event.text == "n":
-                    invalids.fill(False), locked_cells.fill(False), board.fill(0), validity.fill(True)
-                elif event.text == "c":
-                    is_locked = not is_locked
-                    if is_locked:
-                        locked_cells = (board != 0)
-                elif event.text == "t":
-=========
                     invalids[cell_x, cell_y] = check((cell_x, cell_y), int(event.text))
                     board[cell_x, cell_y] = int(event.text)
                 elif event.text == "n":
@@ -305,7 +211,6 @@ def main():
                     is_locked = not is_locked
                     if is_locked:
                         locked_cells = (board != 0)
->>>>>>>>> Temporary merge branch 2
                     solve()
                 elif event.text == "z":
                     game = [[0, 3, 1, 6, 7, 0, 0, 0, 0],
