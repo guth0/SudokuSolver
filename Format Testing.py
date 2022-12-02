@@ -1,5 +1,6 @@
 # TODO:
-#  The bastard is validlity remove
+#  Fix last 2 in solve
+#  Fix lock (colors and locking the numbers)
 
 import pygame
 import time
@@ -26,86 +27,94 @@ validity = np.full((9, 9, 9), True)
 board = np.zeros((9, 9), dtype=int)
 invalids = np.full((9, 9), False)
 locked_cells = np.full((9, 9), False)
+boxes = [{0:3}, {3:6}, {6:9}]  # change all instances of this list 
 
 
-def validity_undo(coordinates: tuple) -> None:  # Bastard code
+def lock(arg):  # Still fucked
+    if arg:
+        print(board)
+        locked_cells = (board != 0)  # Idk if the parenthesis will work but its just an idea, test it :)
+        print(locked_cells)
+
+
+def validity_undo(coordinates: tuple):  # I think this is done
     if board[coordinates]:
         temp_board = ma.masked_where(board != board[coordinates], board, True)
         x, y = coordinates
         for i in range(9):
+            if all(temp_board.mask[:, i]):
+                validity[x, i, board[coordinates] - 1] = True
+            if all(temp_board.mask[i, :]):
+                validity[i, y, board[coordinates] - 1] = True
             if not any(board[x, :] == i + 1) or not any(board[:, y] == i + 1):
-                validity[i, x, y] = True
-        validity[board[coordinates] - 1, x, y] = False
-        for i in range(9):
-            if all(temp_board.mask[:, i]) and not board[x, i]:
-                validity[board[coordinates] - 1, x, i] = True
-            if all(temp_board.mask[i, :]) and not board[x, i]:
-                validity[board[coordinates] - 1, i, y] = True
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-        if np.sum(temp_board.mask[box_x:box_x + 3, box_y:box_y + 3]) < 8:
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = False
+                validity[x, y, i] = True
+        box_x, box_y = int(x / 3), int(y / 3)
+        if np.sum(temp_board.mask[boxes[box_x], boxes[box_y]]) < 8:
+            validity[boxes[box_x], boxes[box_y], board[coordinates] - 1] = False
         else:
-            validity[board[coordinates] - 1, box_x:box_x + 3, box_y:box_y + 3] = True
+            validity[boxes[box_x], boxes[box_y], board[coordinates] - 1] = True
         if invalids[coordinates]:
             invalids[coordinates] = False
 
 
-def validity_do(coordinates: tuple, num: int) -> None:
+def validity_do(coordinates: tuple, num: int):
     if num:
         x, y = coordinates
-        if not validity[(num - 1,) + (coordinates)]:
+        if not validity[(coordinates) + (num - 1,)]:
             invalids[coordinates] = True
-        validity[num - 1, x, :] = False
-        validity[num - 1, :, y] = False
-        validity[:, x, y] = False
-        box_x, box_y = int(x / 3) * 3, int(y / 3) * 3
-        validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
+        validity[x, :, num - 1] = False
+        validity[:, y, num - 1] = False
+        validity[x, y, :] = False
+        box_x, box_y = int(x / 3), int(y / 3)
+        validity[boxes[box_x], boxes[box_y], num - 1] = False
 
 
-def num_update(coordinates: tuple, num: int) -> None:
-    validity_undo(coordinates)
-    board[coordinates] = num
-    validity_do(coordinates, num)
+def num_update(coordinates: tuple, num: int):
+    if not locked_cells[coordinates]:
+        validity_undo(coordinates)
+        board[coordinates] = num
+        validity_do(coordinates, num)
 
 
-def solve() -> None:  # This is not working at fucking all
+def solve():
     update = True
-    # while update:
-    update = False
-    compressed = np.count_nonzero(validity, axis=0)
-    cell_solve = np.where(compressed == 1)  # all of these need to be changed
-    size = cell_solve[0].size
-    if size:
-        for i in range(size):
-            x, y = cell_solve[0][i], cell_solve[1][i]
-            if not board[x, y]:  # Shouldnt have to do this :(
-                num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
-                update = True
-    compressed = np.count_nonzero(validity, axis=1)
-    row_solve = np.where(compressed == 1)
-    size = row_solve[0].size
-    if size:  # columns
-        for i in range(size):
-            z, y = row_solve[0][i], row_solve[1][i]
-            num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
-            update = True
-    compressed = np.count_nonzero(validity, axis=2)
-    column_solve = np.where(compressed == 1)
-    size = column_solve[0].size
-    if size:
-        for i in range(size):
-            z, x = column_solve[0][i], column_solve[1][i]
-            num_update((x, np.where(validity[z, x, :] != 0)[0][0]), z + 1)
-            update = True
-        # for x in range(3):
-        #     for y in range(3):
-        #         for z in range(9):
-        #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
-        #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
-        #                 num_update((coords[0][0], coords[0][1]), z + 1)
+    while update:
+        update = False
+        avalible_vert = np.count_nonzero(validity, axis=2)
+        for x in range(9):
+            for y in range(9):
+                if not board[x, y] and avalible_vert[x, y] == 1:
+                    print("Only Num Avalible")
+                    num_update((x, y), np.where(validity[x, y, :] != 0)[0][0] + 1)
+                    update = True
+        avalible_row = np.count_nonzero(validity, axis=1)
+        for y in range(9):
+            for z in range(9):
+                if avalible_row[y, z] == 1:
+                    print("Only place in row")
+                    print(validity[:, y, z])
+                    num_update((np.where(validity[:, y, z] != 0)[0][0], y), z + 1)  # swap the np.where to y position and put y in the x position, that might be able to fix
+                    update = True
+        avalible_column = np.count_nonzero(validity, axis=0)
+        for x in range(9):
+            for z in range(9):
+                if avalible_column[x, z] == 1:
+                    print("Only place in collumn")
+                    print(f"x = {x} and z = {z}")
+                    print(validity[x, :, z])
+                    num_update((x, np.where(validity[x, :, z] != 0)[0][0]), z + 1)
+                    update = True
+        for x in range(3):
+            for y in range(3):
+                for z in range(9):
+                    if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:  # Try and make this into an array like the other ones just for consistency I think, might be faster too
+                        coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
+                        num_update((coords[0][0], coords[0][1]), z + 1)
+  # DUCES :(
 
 
-def num_draw(num_font) -> None:
+
+def num_draw(num_font):
     for x in range(9):
         for y in range(9):
             if board[x, y]:
@@ -121,7 +130,7 @@ def num_draw(num_font) -> None:
                 WIN.blit(text_surface, (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
 
 
-def draw_main() -> None:
+def draw_main():
     for x in range(0, WIN_PIXELS, CELL_SIZE):
         for y in range(Y_SPACE, WIN_PIXELS + Y_SPACE, CELL_SIZE):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
@@ -136,7 +145,7 @@ def draw_main() -> None:
     WIN.blit(text_surface, (WIN_PIXELS - fps_offset, 0))
 
 
-def validity_draw() -> None:
+def validity_draw():
     if np.any(invalids):
         invalid_list = np.where(invalids)
         invalid_list = list(zip(invalid_list[0], invalid_list[1]))
@@ -146,16 +155,13 @@ def validity_draw() -> None:
                 pygame.draw.rect(WIN, L_RED, (x, y, CELL_SIZE - 1, CELL_SIZE - 1))
 
 
-def movement(keys, local_x: int, local_y: int) -> tuple[int]:
-    move = [True] * 4
+def movement(keys, local_x, local_y):
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
         local_x = 0
     elif keys[pygame.K_a] and local_x > 0:
         local_x -= CELL_SIZE
-    else:
-        move[0] = False
 
     if keys[pygame.K_d] and keys[pygame.K_SPACE] and local_x < WIN_PIXELS - BOX_SIZE:
         local_x += BOX_SIZE
@@ -163,8 +169,6 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int]:
         local_x = 640
     elif keys[pygame.K_d] and local_x < WIN_PIXELS - CELL_SIZE:
         local_x += CELL_SIZE
-    else:
-        move[1] = False
 
     if keys[pygame.K_w] and keys[pygame.K_SPACE] and local_y > BOX_SIZE + Y_SPACE:
         local_y -= BOX_SIZE
@@ -172,8 +176,6 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int]:
         local_y = Y_SPACE
     elif keys[pygame.K_w] and local_y > Y_SPACE:
         local_y -= CELL_SIZE
-    else:
-        move[2] = False
 
     if keys[pygame.K_s] and keys[pygame.K_SPACE] and local_y < WIN_PIXELS - BOX_SIZE:
         local_y += BOX_SIZE
@@ -181,13 +183,12 @@ def movement(keys, local_x: int, local_y: int) -> tuple[int]:
         local_y = 640 + Y_SPACE
     elif keys[pygame.K_s] and local_y < WIN_PIXELS + Y_SPACE - CELL_SIZE:
         local_y += CELL_SIZE
-    else:
-        move[3] = False
+        moved = True
 
-    if any(move):
+    if any(keys):
         time.sleep(.09)
 
-    return (local_x, local_y)
+    return [local_x, local_y]
 
 
 def main():
@@ -211,8 +212,7 @@ def main():
                     invalids.fill(False), locked_cells.fill(False), board.fill(0), validity.fill(True)
                 elif event.text == "c":
                     is_locked = not is_locked
-                    if is_locked:
-                        locked_cells = (board != 0)
+                    lock(is_locked)
                 elif event.text == "t":
                     solve()
 
@@ -230,21 +230,10 @@ def main():
 
         if keypress[pygame.K_q]:
             clock.tick(20)
-            print(f"----------\nCell: ({cell_x}, {cell_y})\nValidity set: {validity[:, cell_x, cell_y]}\n----------")
+            print(f"----------\nCell: ({cell_x}, {cell_y})\nValidity set: {validity[cell_x, cell_y]}\n----------")
         elif keypress[pygame.K_e]:
-            print(np.swapaxes(validity, 2, 1))
+            print(np.count_nonzero(validity, axis=int(input("axis: "))))
     pygame.quit()
 
 
 main()
-
-'''
-array([[4, 0, 9, 0, 7, 2, 0, 1, 3],
-       [7, 0, 2, 8, 3, 0, 6, 0, 0],
-       [0, 1, 6, 0, 4, 9, 8, 7, 0],
-       [2, 0, 0, 1, 0, 0, 0, 6, 0],
-       [5, 4, 7, 0, 0, 0, 2, 0, 0],
-       [6, 9, 0, 0, 0, 4, 0, 3, 5],
-       [8, 0, 3, 4, 0, 0, 0, 0, 6],
-       [0, 0, 0, 0, 0, 3, 1, 0, 0],
-       [0, 6, 0, 9, 0, 0, 0, 4, 0]])'''
