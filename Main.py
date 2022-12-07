@@ -63,7 +63,7 @@ def solve() -> None:
     update = True
     while update:
         update = False
-        compressed = np.count_nonzero(validity, axis=0)
+        compressed[:,:] = np.count_nonzero(validity, axis=0) #check if this is faster, will have to define compresesd earlier
         cell_solve = np.where(compressed == 1)
         size = cell_solve[0].size
         if size:
@@ -95,20 +95,22 @@ def solve() -> None:
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
-def num_draw(num_font) -> None:
+def cell_draw(num_font) -> None:
     for x in range(9):
         for y in range(9):
             if board[x, y]:
-                if invalids[x, y]:
-                    color = D_RED
-                elif board[x, y] == board[cell_x, cell_y]:
-                    color = PALE_BLUE
+                if board[x, y] == board[cell_x, cell_y]:
+                    txt_color = PALE_BLUE
                 elif locked_cells[x, y]:
-                    color = BLACK
+                    txt_color = BLACK
                 else:
-                    color = D_GREY
-                text_surface = num_font.render(str(int(board[x, y])), True, color)
+                    txt_color = D_GREY
+                text_surface = num_font.render(str(int(board[x, y])), True, txt_color)
                 WIN.blit(text_surface, (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
+                if invalids[x, y]:
+                    cell_color = D_RED  # Might want to change it to light red
+                box_surface = pygame.Rect((x * CELL_SIZE, y * CELL_SIZE), (CELL_SIZE + 2, CELL_SIZE + 2))  # Could make a np matrix at the beginning with all the boxes and call them when I need to draw
+                pygame.draw.rect(WIN, cell_color, box_surface)
 
 
 def draw_main() -> None:
@@ -129,7 +131,7 @@ def draw_main() -> None:
 def validity_draw() -> None:
     if np.any(invalids):
         invalid_list = np.where(invalids)
-        invalid_list = list(zip(invalid_list[0], invalid_list[1]))
+        invalid_list[:] = list(zip(invalid_list[0], invalid_list[1]))  # In place is better on mem but idk if its faster 
         if len(invalid_list):
             for coordinates in invalid_list:
                 x, y = coordinates[0] * 80, coordinates[1] * 80 + Y_SPACE
