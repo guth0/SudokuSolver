@@ -1,9 +1,9 @@
 # TODO:
 #  user inputs are different color before solve, then change to black for locked, and all solve() are grey
-#  when user inputs a number, check if invalid
 
 import pygame
 import numpy as np
+from functools import lru_cache
 
 pygame.init()
 pygame.font.init()
@@ -21,10 +21,10 @@ cell_x, cell_y, player_x, player_y, FPS = 0, 0, 0, 0, 60
 is_locked = False
 FPS_FONT = pygame.font.SysFont('arial', 15)
 clock = pygame.time.Clock()
-validity = np.full((9, 9, 9), True)
+validity = np.ones((9, 9, 9), dtype=bool)
 board = np.zeros((9, 9), dtype=int)
-invalids = np.full((9, 9), False)
-locked_cells = np.full((9, 9), False)
+invalids = np.zeros((9, 9), dtype=bool)
+locked_cells = np.zeros((9, 9), dtype=bool)
 
 
 def validity_do(coordinates: tuple, num: int) -> None:
@@ -37,12 +37,6 @@ def validity_do(coordinates: tuple, num: int) -> None:
         validity[:, x, y] = False
         box_x, box_y = x // 3 * 3, y // 3 * 3
         validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-
-
-def board_validity(array) -> None:
-    for x in range(9):
-        for y in range(9):
-            validity_do((x, y), array[x][y])
 
 
 def check(coordinates: tuple[int, int], value: int) -> bool:
@@ -63,7 +57,7 @@ def solve() -> None:
     update = True
     while update:
         update = False
-        compressed[:,:] = np.count_nonzero(validity, axis=0) #check if this is faster, will have to define compresesd earlier
+        compressed = np.einsum("ijk -> jk", validity.astype(int))
         cell_solve = np.where(compressed == 1)
         size = cell_solve[0].size
         if size:
@@ -71,7 +65,7 @@ def solve() -> None:
                 x, y = cell_solve[0][i], cell_solve[1][i]
                 num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
                 update = True
-        compressed = np.count_nonzero(validity, axis=1)
+        compressed = np.einsum("ijk -> ik", validity.astype(int))
         row_solve = np.where(compressed == 1)
         size = row_solve[0].size
         if size:  # columns
@@ -79,7 +73,7 @@ def solve() -> None:
                 z, y = row_solve[0][i], row_solve[1][i]
                 num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
                 update = True
-        compressed = np.count_nonzero(validity, axis=2)
+        compressed = np.einsum("ijk -> ij", validity.astype(int))
         column_solve = np.where(compressed == 1)
         size = column_solve[0].size
         if size:
@@ -95,25 +89,42 @@ def solve() -> None:
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
-def cell_draw(num_font) -> None:
+
+@lru_cache(maxsize=3)
+def make_rect(x: int, y: int) -> object:
+    return pygame.Rect((x * CELL_SIZE, y * CELL_SIZE + Y_SPACE), (CELL_SIZE + 2, CELL_SIZE + 2))
+
+
+@lru_cache(maxsize=81)
+def make_num(num_font: pygame.font, num: str, txt_color: tuple[int, int, int]):
+    return num_font.render(num, True, txt_color)
+
+
+def cell_draw() -> None:
     for x in range(9):
         for y in range(9):
             if board[x, y]:
                 if board[x, y] == board[cell_x, cell_y]:
-                    txt_color = PALE_BLUE
+                    pygame.draw.rect(WIN, PALE_BLUE, make_rect(x, y))
+
+
+def num_draw(num_font) -> None:
+    for x in range(9):
+        for y in range(9):
+            if board[x, y]:
+                if invalids[x, y]:
+                    txt_color = D_RED
+
                 elif locked_cells[x, y]:
                     txt_color = BLACK
                 else:
                     txt_color = D_GREY
-                text_surface = num_font.render(str(int(board[x, y])), True, txt_color)
-                WIN.blit(text_surface, (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
-                if invalids[x, y]:
-                    cell_color = D_RED  # Might want to change it to light red
-                box_surface = pygame.Rect((x * CELL_SIZE, y * CELL_SIZE), (CELL_SIZE + 2, CELL_SIZE + 2))  # Could make a np matrix at the beginning with all the boxes and call them when I need to draw
-                pygame.draw.rect(WIN, cell_color, box_surface)
+                WIN.blit(make_num(num_font, str(int(board[x, y])), txt_color),
+                         (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
 
 
-def draw_main() -> None:
+
+def board_draw() -> None:
     for x in range(0, WIN_PIXELS, CELL_SIZE):
         for y in range(Y_SPACE, WIN_PIXELS + Y_SPACE, CELL_SIZE):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
@@ -140,7 +151,7 @@ def validity_draw() -> None:
 
 def movement(keys, local_x: int, local_y: int) -> tuple[int, int]:
     move = [True] * 4
-    
+
     if keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x > BOX_SIZE:
         local_x -= BOX_SIZE
     elif keys[pygame.K_a] and keys[pygame.K_SPACE] and local_x < BOX_SIZE:
@@ -232,8 +243,9 @@ def main():
 
         WIN.fill(GREY)
         validity_draw()
+        cell_draw()
         pygame.draw.rect(WIN, BLUE, pygame.Rect(player_x, player_y, CELL_SIZE - 1, CELL_SIZE - 1))
-        draw_main()
+        board_draw()
         title_surface = font.render(TITLE, True, BLACK)
         WIN.blit(title_surface, (title_y_offset, 5))
         num_draw(font)
