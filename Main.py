@@ -89,6 +89,7 @@ def solve() -> None:
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
+
 @lru_cache(maxsize=3)
 def make_rect(x: int, y: int) -> object:
     return pygame.Rect((x * CELL_SIZE, y * CELL_SIZE + Y_SPACE), (CELL_SIZE + 2, CELL_SIZE + 2))
@@ -113,12 +114,14 @@ def num_draw(num_font) -> None:
             if board[x, y]:
                 if invalids[x, y]:
                     txt_color = D_RED
+
                 elif locked_cells[x, y]:
                     txt_color = BLACK
                 else:
                     txt_color = D_GREY
                 WIN.blit(make_num(num_font, str(int(board[x, y])), txt_color),
                          (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
+
 
 
 def board_draw() -> None:
@@ -139,7 +142,7 @@ def board_draw() -> None:
 def validity_draw() -> None:
     if np.any(invalids):
         invalid_list = np.where(invalids)
-        invalid_list = list(zip(invalid_list[0], invalid_list[1]))
+        invalid_list[:] = list(zip(invalid_list[0], invalid_list[1]))  # In place is better on mem but idk if its faster 
         if len(invalid_list):
             for coordinates in invalid_list:
                 x, y = coordinates[0] * 80, coordinates[1] * 80 + Y_SPACE
