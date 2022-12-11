@@ -1,9 +1,9 @@
 # TODO:
 #  user inputs are different color before solve, then change to black for locked, and all solve() are grey
-#  add cell colors
 
 import pygame
 import numpy as np
+from functools import lru_cache
 
 pygame.init()
 pygame.font.init()
@@ -21,11 +21,10 @@ cell_x, cell_y, player_x, player_y, FPS = 0, 0, 0, 0, 60
 is_locked = False
 FPS_FONT = pygame.font.SysFont('arial', 15)
 clock = pygame.time.Clock()
-validity = np.ones((9, 9), dtype=bool)
+validity = np.ones((9, 9, 9), dtype=bool)
 board = np.zeros((9, 9), dtype=int)
 invalids = np.zeros((9, 9), dtype=bool)
 locked_cells = np.zeros((9, 9), dtype=bool)
-colors = np.zeros((9, 9), dtype=tuple)
 
 
 def validity_do(coordinates: tuple, num: int) -> None:
@@ -38,12 +37,6 @@ def validity_do(coordinates: tuple, num: int) -> None:
         validity[:, x, y] = False
         box_x, box_y = x // 3 * 3, y // 3 * 3
         validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-
-
-def board_validity(array) -> None:
-    for x in range(9):
-        for y in range(9):
-            validity_do((x, y), array[x][y])
 
 
 def check(coordinates: tuple[int, int], value: int) -> bool:
@@ -96,23 +89,39 @@ def solve() -> None:
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
+@lru_cache(maxsize=3)
+def make_rect(x: int, y: int) -> object:
+    return pygame.Rect((x * CELL_SIZE, y * CELL_SIZE + Y_SPACE), (CELL_SIZE + 2, CELL_SIZE + 2))
+
+
+@lru_cache(maxsize=81)
+def make_num(num_font: pygame.font, num: str, txt_color: tuple[int, int, int]):
+    return num_font.render(num, True, txt_color)
+
+
+def cell_draw() -> None:
+    for x in range(9):
+        for y in range(9):
+            if board[x, y]:
+                if board[x, y] == board[cell_x, cell_y]:
+                    pygame.draw.rect(WIN, PALE_BLUE, make_rect(x, y))
+
+
 def num_draw(num_font) -> None:
     for x in range(9):
         for y in range(9):
             if board[x, y]:
                 if invalids[x, y]:
-                    color = D_RED
-                elif board[x, y] == board[cell_x, cell_y]:
-                    color = PALE_BLUE
+                    txt_color = D_RED
                 elif locked_cells[x, y]:
-                    color = BLACK
+                    txt_color = BLACK
                 else:
-                    color = D_GREY
-                text_surface = num_font.render(str(int(board[x, y])), True, color)
-                WIN.blit(text_surface, (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
+                    txt_color = D_GREY
+                WIN.blit(make_num(num_font, str(int(board[x, y])), txt_color),
+                         (x * CELL_SIZE + 18, y * CELL_SIZE - 2 + Y_SPACE))
 
 
-def draw_main() -> None:
+def board_draw() -> None:
     for x in range(0, WIN_PIXELS, CELL_SIZE):
         for y in range(Y_SPACE, WIN_PIXELS + Y_SPACE, CELL_SIZE):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
@@ -231,8 +240,9 @@ def main():
 
         WIN.fill(GREY)
         validity_draw()
+        cell_draw()
         pygame.draw.rect(WIN, BLUE, pygame.Rect(player_x, player_y, CELL_SIZE - 1, CELL_SIZE - 1))
-        draw_main()
+        board_draw()
         title_surface = font.render(TITLE, True, BLACK)
         WIN.blit(title_surface, (title_y_offset, 5))
         num_draw(font)
