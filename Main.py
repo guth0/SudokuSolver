@@ -89,10 +89,9 @@ def solve() -> None:
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
 
 
-
-@lru_cache(maxsize=3)
+@lru_cache(maxsize=6)
 def make_rect(x: int, y: int) -> object:
-    return pygame.Rect((x * CELL_SIZE, y * CELL_SIZE + Y_SPACE), (CELL_SIZE + 2, CELL_SIZE + 2))
+    return pygame.Rect((x * CELL_SIZE, y * CELL_SIZE + Y_SPACE), (CELL_SIZE, CELL_SIZE))
 
 
 @lru_cache(maxsize=81)
