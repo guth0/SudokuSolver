@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def validation(board):
+def validation(board: np.ndarray) -> np.ndarray:
     validity = np.ones((9, 9, 9), dtype=bool)
     for x in range(9):
         for y in range(9):
@@ -15,7 +15,7 @@ def validation(board):
     return validity
 
 
-def solve(board) -> None:
+def solve(board: np.ndarray) -> np.ndarray:
 
 
     def num_update(coordinates: tuple[int, int], num: int) -> None:
@@ -65,16 +65,20 @@ def solve(board) -> None:
         #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:
         #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
         #                 num_update((coords[0][0], coords[0][1]), z + 1)
+    return board
 
 
 def main():
     board = np.zeros((9, 9), dtype=int)
 
-    print("Input board row by row, with zeros for for blank spaces\nExample -- 002004539")
+    print("Input board row by row, with zeros for for blank spaces\nExample --- 002004539\n")
     for y in range(9):
-            board[y, :] = [*input(f"Enter row {y+1}: ")]
-    solve(board)
-    print(f"Solution is:\n{board}")
+            row = input(f"Enter row {y+1}: ").strip()
+            while len(row) != 9 or not row.isdigit():
+                print("Invalid input")
+                row = input(f"Enter row {y+1}: ").strip()
+            board[y, :] = [*row]
+    print(f"Solution is:\n{solve(board)}")
 
 
 main()
