@@ -1,71 +1,8 @@
+# TODO:
+#  Add "only one in box" to solve
+
 import numpy as np
-
-
-def validation(board: np.ndarray) -> np.ndarray:
-    validity = np.ones((9, 9, 9), dtype=bool)
-    for x in range(9):
-        for y in range(9):
-            num = board[x, y]
-            if num:
-                validity[num - 1, x, :] = False
-                validity[num - 1, :, y] = False
-                validity[:, x, y] = False
-                box_x, box_y = x // 3 * 3, y // 3 * 3
-                validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-    return validity
-
-
-def solve(board: np.ndarray) -> np.ndarray:
-
-
-    def num_update(coordinates: tuple[int, int], num: int) -> None:
-        board[coordinates] = num
-        validity_update(num,coordinates)
-
-
-    def validity_update(num, coordinates):
-        x, y = coordinates
-        validity[num - 1, x, :] = False
-        validity[num - 1, :, y] = False
-        validity[:, x, y] = False
-        box_x, box_y = x // 3 * 3, y // 3 * 3
-        validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
-
-    validity = validation(board)
-    update = True
-    while update:
-        update = False
-        compressed = np.einsum("ijk -> jk", validity.astype(int))
-        cell_solve = np.where(compressed == 1)
-        size = cell_solve[0].size
-        if size:
-            for i in range(size):
-                x, y = cell_solve[0][i], cell_solve[1][i]
-                num_update((x, y), np.where(validity[:, x, y] != 0)[0][0] + 1)
-                update = True
-        compressed = np.einsum("ijk -> ik", validity.astype(int))
-        row_solve = np.where(compressed == 1)
-        size = row_solve[0].size
-        if size:  # columns
-            for i in range(size):
-                z, y = row_solve[0][i], row_solve[1][i]
-                num_update((np.where(validity[z, :, y] != 0)[0][0], y), z + 1)
-                update = True
-        compressed = np.einsum("ijk -> ij", validity.astype(int))
-        column_solve = np.where(compressed == 1)
-        size = column_solve[0].size
-        if size:
-            for i in range(size):
-                z, x = column_solve[0][i], column_solve[1][i]
-                num_update((x, np.where(validity[z, x, :] != 0)[0][0]), z + 1)
-                update = True
-        # for x in range(3):
-        #     for y in range(3):
-        #         for z in range(9):
-        #             if np.count_nonzero(validity[box_cells[x], box_cells[y], z]) == 1:
-        #                 coords = np.where(validity[box_cells[x], box_cells[y], z] != 0)
-        #                 num_update((coords[0][0], coords[0][1]), z + 1)
-    return board
+from Solve import solve
 
 
 def main():
@@ -73,11 +10,17 @@ def main():
 
     print("Input board row by row, with zeros for for blank spaces\nExample --- 002004539\n")
     for y in range(9):
+        row = input(f"Enter row {y+1}: ").strip()
+        while len(row) != 9 or not row.isdigit():
+            print("Invalid input")
             row = input(f"Enter row {y+1}: ").strip()
-            while len(row) != 9 or not row.isdigit():
-                print("Invalid input")
-                row = input(f"Enter row {y+1}: ").strip()
-            board[y, :] = [*row]
+        board[y, :] = [*row]
+
+    kat = ["031670000", "790000030", "000013570", "080530900",
+           "000060080", "307802040", "153489000", "008000000", "009000804"]
+    for i, level in enumerate(kat):
+        board[i, :] = [*level]
+
     print(f"Solution is:\n{solve(board)}")
 
 
@@ -105,4 +48,13 @@ Medium:
  [1, 5, 3, 4, 8, 9, 0, 0, 0],
  [0, 0, 8, 0, 0, 0, 0, 0, 0],
  [0, 0, 9, 0, 0, 0, 8, 0, 4]]
+Enter row 1: 003000000
+Enter row 2: 204000000
+Enter row 3: 509000000
+Enter row 4: 000000000
+Enter row 5: 000000000
+Enter row 6: 000000000
+Enter row 7: 000000000
+Enter row 8: 000000000
+Enter row 9: 010000000
 '''

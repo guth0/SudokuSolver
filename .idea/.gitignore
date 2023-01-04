@@ -1,3 +1,8 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
+# Custom files
+.vscode/settings.json
+__pychache__/
+.idea/inspectionProfiles/
