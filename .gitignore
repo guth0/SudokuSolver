@@ -4,5 +4,5 @@
 
 # Custom files
 .vscode/settings.json
-__pychache__/
+__pycache__/Backtracking.cpython-311.pyc
 .idea/inspectionProfiles/
