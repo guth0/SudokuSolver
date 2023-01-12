@@ -11,18 +11,22 @@ def solve(board):
                         board[i, j] = n
                         if solve(board):
                             return True
+
                         board[i, j] = 0
                 return False
     return True
 
 
 def is_valid(board, row, col, num):
+
     if (board[row, :] == num).any():
         return False
+
     if (board[:, col] == num).any():
         return False
-    box_row = row - row % 3
-    box_col = col - col % 3
+
+    box_row = row - (row % 3)
+    box_col = col - (col % 3)
     if (board[box_row:box_row+3, box_col:box_col+3] == num).any():
         return False
 

@@ -1,29 +1,31 @@
 # TODO:
-#  Add "only one in box" to solve
+#    Check if it is faster to add validity to backtracking.py
 
 import numpy as np
-from Solve import solve
+from Solve import Solution
 
 
 def main():
     board = np.zeros((9, 9), dtype=int)
 
-    print("Input board row by row, with zeros for for blank spaces\nExample --- 002004539\n")
-    for y in range(9):
-        row = input(f"Enter row {y+1}: ").strip()
-        while len(row) != 9 or not row.isdigit():
-            print("Invalid input")
-            row = input(f"Enter row {y+1}: ").strip()
-        board[y, :] = [*row]
+    # print("Input board row by row, with zeros for for blank spaces\nExample --- 002004539\n")
+    # for y in range(9):
+    #     row = input(f"Enter row {y+1}: ").strip()
+    #     while len(row) != 9 or not row.isdigit():
+    #         print("Invalid input")
+    #         row = input(f"Enter row {y+1}: ").strip()
+    #     board[y, :] = [*row]
 
     box = ["003000000", "204000000", "509000000", "000000000",
            "000000000", "010000000", "000000000", "000000000", "000000000"]
     for i, level in enumerate(box):
         board[i, :] = [*level]
-    print(f"Solution is:\n{solve(board)}")
+    result = Solution(board)
+    print(f"\n     -Solution-\n{result}")
 
 
-main()
+if __name__ == "__main__":
+    main()
 
 '''
 Easy:
@@ -47,16 +49,9 @@ Medium:
  [1, 5, 3, 4, 8, 9, 0, 0, 0],
  [0, 0, 8, 0, 0, 0, 0, 0, 0],
  [0, 0, 9, 0, 0, 0, 8, 0, 4]]
-Enter row 1: 003000000
-Enter row 2: 204000000
-Enter row 3: 509000000
-Enter row 4: 000000000
-Enter row 5: 000000000
-Enter row 6: 000000000
-Enter row 7: 000000000
-Enter row 8: 000000000
-Enter row 9: 010000000
-box = ["003000000", "204000000", "509000000", "000000000", "000000000", "010000000", "000000000", "000000000", "000000000"]
+
+    box = ["003000000", "204000000", "509000000", "000000000",
+        "000000000", "010000000", "000000000", "000000000", "000000000"]
     kat = ["031670000", "790000030", "000013570", "080530900",
            "000060080", "307802040", "153489000", "008000000", "009000804"]
 '''
