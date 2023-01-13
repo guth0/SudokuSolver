@@ -1,27 +1,28 @@
 # TODO:
-#    Check if it is faster to add validity to backtracking.py
+#    Do "my solve" in the middle of backtracking() to make faster
+#    Fix box solve
 
 import numpy as np
 from Solve import Solution
 
 
 def main():
-    board = np.zeros((9, 9), dtype=int)
+    game = Solution()
+    print("Input board row by row, with zeros for for blank spaces\nExample: 002004539\n")
+    for i in range(9):
+        row = input(f"Enter row {i+1}: ").strip()
+        while len(row) != 9 or not row.isdigit():
+            print("Invalid input")
+            row = input(f"Enter row {i+1}: ").strip()
+        game.row_validation(row, i)
 
-    # print("Input board row by row, with zeros for for blank spaces\nExample --- 002004539\n")
-    # for y in range(9):
-    #     row = input(f"Enter row {y+1}: ").strip()
-    #     while len(row) != 9 or not row.isdigit():
-    #         print("Invalid input")
-    #         row = input(f"Enter row {y+1}: ").strip()
-    #     board[y, :] = [*row]
+    # hard = ['005010003', '306000000', '080020500', '000006300',
+    #         '010004900', '460007008', '000000000', '040090800', '050001070']
+    # for i, level in enumerate(hard):
+    #     game.row_validation(level, i)
 
-    box = ["003000000", "204000000", "509000000", "000000000",
-           "000000000", "010000000", "000000000", "000000000", "000000000"]
-    for i, level in enumerate(box):
-        board[i, :] = [*level]
-    result = Solution(board)
-    print(f"\n     -Solution-\n{result}")
+    game.solve()
+    print(f"\n      -Solution-\n{game}")
 
 
 if __name__ == "__main__":
@@ -38,6 +39,8 @@ Easy:
  [8, 0, 3, 4, 0, 0, 0, 0, 6],
  [0, 0, 0, 0, 0, 3, 1, 0, 0],
  [0, 6, 0, 9, 0, 0, 0, 4, 0]]
+    easy = ['409072013', '702830600', '016049870', '200100060',
+            '547000200', '690004035', '803400006', '000003100', '060900040']
 
 Medium:
 [[0, 3, 1, 6, 7, 0, 0, 0, 0],
@@ -49,9 +52,24 @@ Medium:
  [1, 5, 3, 4, 8, 9, 0, 0, 0],
  [0, 0, 8, 0, 0, 0, 0, 0, 0],
  [0, 0, 9, 0, 0, 0, 8, 0, 4]]
+    medium = ['031670000', '790000030', '000013570', '080530900',
+              '000060080', '307802040', '153489000', '008000000', '009000804']
 
-    box = ["003000000", "204000000", "509000000", "000000000",
-        "000000000", "010000000", "000000000", "000000000", "000000000"]
+Hard:
+[[0, 0, 5, 0, 1, 0, 0, 0, 3],
+ [3, 0, 6, 0, 0, 0, 0, 0, 0],
+ [0, 8, 0, 0, 2, 0, 5, 0, 0],
+ [0, 0, 0, 0, 0, 6, 3, 0, 0],
+ [0, 1, 0, 0, 0, 4, 9, 0, 0],
+ [4, 6, 0, 0, 0, 7, 0, 0, 8],
+ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+ [0, 4, 0, 0, 9, 0, 8, 0, 0],
+ [0, 5, 0, 0, 0, 1, 0, 7, 0]]
+    hard = ['005010003', '306000000', '080020500', '000006300',
+            '010004900', '460007008', '000000000', '040090800', '050001070']
+
+    box_test = ["003000000", "204000000", "509000000", "000000000",
+                "000000000", "010000000", "000000000", "000000000", "000000000"]
     kat = ["031670000", "790000030", "000013570", "080530900",
            "000060080", "307802040", "153489000", "008000000", "009000804"]
 '''
