@@ -1,6 +1,6 @@
 # TODO:
-#    Do "my solve" in the middle of backtracking() to make faster
-#    Fix box solve
+#  Fix box solve
+#  Add duces and other solving methods and eventually remove backtracking
 
 import numpy as np
 from Solve import Solution
