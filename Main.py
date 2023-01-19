@@ -1,6 +1,10 @@
 # TODO:
 #  Fix box solve
-#  Add duces and other solving methods and eventually remove backtracking
+#  larger update loop with nested loops with increasingly tolling solves
+#  Add duces
+#  Add double duces
+#  Create class for duces
+#  X-wing
 
 import numpy as np
 from Solve import Solution
@@ -8,18 +12,28 @@ from Solve import Solution
 
 def main():
     game = Solution()
-    print("Input board row by row, with zeros for for blank spaces\nExample: 002004539\n")
-    for i in range(9):
-        row = input(f"Enter row {i+1}: ").strip()
-        while len(row) != 9 or not row.isdigit():
-            print("Invalid input")
-            row = input(f"Enter row {i+1}: ").strip()
-        game.row_validation(row, i)
 
-    # hard = ['005010003', '306000000', '080020500', '000006300',
-    #         '010004900', '460007008', '000000000', '040090800', '050001070']
-    # for i, level in enumerate(hard):
+    # print("Input board row by row, with zeros for for blank spaces\nExample: 002004539\n")
+    # for i in range(9):
+    #     row = input(f"Enter row {i+1}: ").strip()
+    #     while len(row) != 9 or not row.isdigit():
+    #         print("Invalid input")
+    #         row = input(f"Enter row {i+1}: ").strip()
+    #     game.row_validation(row, i, pre_solve=True)
+
+    # medium = ['031670000', '790000030', '000013570', '080530900',
+    #           '000060080', '307802040', '153489000', '008000000', '009000804']
+    # for i, level in enumerate(medium):
     #     game.row_validation(level, i)
+    game.board = np.array([[1, 7, 0, 2, 3, 4, 5, 6, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 9, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 8],
+                           [5, 3, 4, 0, 0, 0, 0, 0, 0],
+                           [6, 0, 0, 0, 0, 8, 0, 0, 0],
+                           [2, 1, 0, 0, 0, 0, 8, 0, 0]])
 
     game.solve()
     print(f"\n      -Solution-\n{game}")
@@ -72,4 +86,15 @@ Hard:
                 "000000000", "010000000", "000000000", "000000000", "000000000"]
     kat = ["031670000", "790000030", "000013570", "080530900",
            "000060080", "307802040", "153489000", "008000000", "009000804"]
+
+Duces
+[[1, 7, 0, 2, 3, 4, 5, 6, 0],
+ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+ [0, 9, 0, 0, 0, 0, 0, 0, 0],
+ [0, 0, 0, 0, 0, 0, 0, 0, 0],
+ [0, 0, 0, 0, 0, 0, 0, 0, 8],
+ [5, 3, 4, 0, 0, 0, 0, 0, 0],
+ [6, 0, 0, 0, 0, 8, 0, 0, 0],
+ [2, 1, 0, 0, 0, 0, 8, 0, 0]]
 '''
