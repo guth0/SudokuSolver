@@ -34,8 +34,8 @@ class Solution():
         self.validity[num - 1, x, :] = False
         self.validity[num - 1, :, y] = False
         self.validity[:, x, y] = False
-        box_x, box_y = x // 3 * 3, y // 3 * 3
-        self.validity[num - 1, box_x:box_x + 3, box_y:box_y + 3] = False
+        xbox, ybox = x // 3 * 3, y // 3 * 3
+        self.validity[num - 1, xbox:xbox + 3, ybox:ybox + 3] = False
 
     def create_validation(self):
         for x in range(9):
@@ -47,8 +47,6 @@ class Solution():
     def num_update(self, coordinates: tuple[int, int], num: int):
         self.board[coordinates] = num
         self.validity_update(num, coordinates)
-        self.count += 1
-        print(f"Solved {self.count} cells")
 
     def solve(self, backtracking: bool = True):
 
@@ -111,7 +109,6 @@ class Solution():
             while update:
                 update = False
 
-                '''BROKEN'''
                 # Only one valid positon in a box
                 for i in range(9):
                     for x in range(3):
@@ -126,6 +123,9 @@ class Solution():
                                 self.num_update(
                                     (cell[0][0], cell[1][0]), i + 1)
                                 update_true()
+                                self.count += 1
+                                print(
+                                    f"Solved {self.count} cells via box elimination")
 
             # Might need to make two versions of self.duces because a
             #   row duce and column duce can overlap in the compression
