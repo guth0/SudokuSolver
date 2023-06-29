@@ -10,6 +10,7 @@ class Solution():
         self.validity = np.ones((9, 9, 9), dtype=bool)
         # number, column, row
         # self.duces = np.zeros((9, 9, 9), dtype=bool)
+        self.count = 0
 
     def __repr__(self):
         string = " -------------------\n"
@@ -21,7 +22,7 @@ class Solution():
         string += " -------------------"
         return string
 
-    def row_validation(self, row: str, row_num: int, pre_solve: bool = False):
+    def row_impliment(self, row: str, row_num: int, pre_solve: bool = False):
         for i, num in enumerate(row):
             if num != 0:
                 self.board[row_num, i] = num
@@ -46,6 +47,8 @@ class Solution():
     def num_update(self, coordinates: tuple[int, int], num: int):
         self.board[coordinates] = num
         self.validity_update(num, coordinates)
+        self.count += 1
+        print(f"Solved {self.count} cells")
 
     def solve(self, backtracking: bool = True):
 
@@ -133,24 +136,31 @@ class Solution():
             # Try to do np.any(all the rows in self.duces) then multiply
             # might get rid of do_duces
 
-            # No loop because compressed_row is updated in the first loop only
             if do_duces and (np.any(compressed_row == 2) or np.any(compressed_column == 2)):
-                do_duces = False
+
+                compressed_row = np.einsum(
+                    "ijk -> ik", self.validity.astype(int))
                 row_duces = np.where(compressed_row == 2)
                 size = row_duces[0].size
                 if size:
                     for i in range(size):
                         z, y = row_duces[0][i], row_duces[1][i]
                         duce = np.where(self.validity[z, :, y] == True)
+
                         # Put onto duces array
                         # self.duces[z, duce[0][0], y] = True
                         # self.duces[z, duce[1][0], y] = True
                         # Add to validity
-                        self.validity[z, :, y] = False
-                        self.validity[z, duce[0][0], y] = True
-                        self.validity[z, duce[0][1], y] = True
-                        root_update = True
 
+                        # Check if they are in the same box
+                        if duce[0][0]//3 == duce[0][1]//3:
+                            self.validity[z, :, y] = False
+                            self.validity[z, duce[0][0], y] = True
+                            self.validity[z, duce[0][1], y] = True
+                            root_update = True
+
+                compressed_column = np.einsum(
+                    "ijk -> ij", self.validity.astype(int))
                 column_duces = np.where(compressed_column == 2)
                 size = column_duces[0].size
                 if size:
@@ -161,16 +171,20 @@ class Solution():
                         # self.duces[z, x, duce[0][0]] = True
                         # self.duces[z, x, duce[1][0]] = True
                         # Add to validity
-                        self.validity[z, x, :] = False
-                        self.validity[z, x, duce[0][0]] = True
-                        self.validity[z, x, duce[0][1]] = True
-                        root_update = True
+
+                        # Check if they are in the same box
+                        if duce[0][0]//3 == duce[0][1]//3:
+                            self.validity[z, x, :] = False
+                            self.validity[z, x, duce[0][0]] = True
+                            self.validity[z, x, duce[0][1]] = True
+                            root_update = True
 
                 # duces that are ontop of eachother are to be done here
                 # look at compressed_row and compressed_column and
                 #   see if there are 2 "2"'s in the same column
                 # That means that there is two duces in the same row for different numbers
                 # Then check if they are in the same cell
+
                 # Think about if there are three duces in the same row/column
 
                 # Could copy this work for "truces"??
@@ -178,9 +192,9 @@ class Solution():
                 #   combinations of duces and truces that lead to
                 # three different cells that can only be those three numbers
 
-            if backtracking and np.any(self.board == 0):
-                self.backtrack(self.board)
-                print("   --Backtracked--")
+        if backtracking and np.any(self.board == 0):
+            self.backtrack(self.board)
+            print("   --Backtracked--")
 
     def backtrack(self, board: np.ndarray) -> bool:
         # Find the next empty cell
