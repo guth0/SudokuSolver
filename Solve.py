@@ -1,6 +1,45 @@
 import numpy as np
 
 
+def count_box_nonzeros(matrix: np.ndarray):
+    reshaped_matrix = matrix.astype(int).reshape(3, 3, 3, 3)
+    counts = np.einsum('ijkl->ik', reshaped_matrix)
+    return counts
+
+
+def is_valid_sudoku(grid):
+    # Check rows
+    for row in grid:
+        if not is_valid_set(row):
+            return False
+
+    # Check columns
+    for col in range(9):
+        column = [grid[row][col] for row in range(9)]
+        if not is_valid_set(column):
+            return False
+
+    # Check boxes
+    for i in range(0, 9, 3):
+        for j in range(0, 9, 3):
+            subgrid = [grid[row][col]
+                       for row in range(i, i + 3) for col in range(j, j + 3)]
+            if not is_valid_set(subgrid):
+                return False
+
+    return True
+
+
+def is_valid_set(nums):
+    seen = set()
+    for num in nums:
+        if num != '.':
+            if num in seen:
+                return False
+            seen.add(num)
+    return True
+
+
 class Solution():
 
     def __init__(self):
@@ -19,7 +58,8 @@ class Solution():
             for num in row:
                 string += " " + str(num)
             string += " |\n"
-        string += " -------------------"
+        string += " -------------------\n"
+        string += f"       {'VALID' if is_valid_sudoku(self.board) else 'INVALID'}"
         return string
 
     def row_impliment(self, row: str, row_num: int, pre_solve: bool = False):
@@ -75,8 +115,8 @@ class Solution():
                 if size:
                     for i in range(size):
                         x, y = cell_solve[0][i], cell_solve[1][i]
-                        self.num_update((x, y), np.where(
-                            self.validity[:, x, y] != 0)[0][0] + 1)
+                        self.num_update((x, y),
+                                        np.where(self.validity[:, x, y] != 0)[0][0] + 1)
                         update_true()
 
                 # Only one valid position in column
@@ -105,27 +145,30 @@ class Solution():
                             (x, np.where(self.validity[z, x, :] != 0)[0][0]), z + 1)
                         update_true()
 
-            update = True
+            update = False
             while update:
                 update = False
 
+                '''BROKEN'''
+                # For some reason there are 2 spots where 1 wants to be in the meidum difficulty
+
                 # Only one valid positon in a box
                 for i in range(9):
-                    for x in range(3):
-                        for y in range(3):
-                            x_slice, y_slice = slice(
-                                x*3, (x+1)*3), slice(y*3, (y+1)*3)
-                            num = np.count_nonzero(
-                                self.validity[i, x_slice, y_slice])
-                            if num == 1:
-                                cell = np.where(
-                                    self.validity[i, x_slice, y_slice])
-                                self.num_update(
-                                    (cell[0][0], cell[1][0]), i + 1)
-                                update_true()
-                                self.count += 1
-                                print(
-                                    f"Solved {self.count} cells via box elimination")
+                    compressed_box = count_box_nonzeros(self.validity[i])
+                    box_solve = np.where(compressed_box == 1)
+                    size = box_solve[0].size
+                    if size:
+                        for j in range(size):
+                            x, y = box_solve[0][j], box_solve[1][j]
+                            cell = np.where(
+                                self.validity[i, x*3:(x+1)*3, y*3:(y+1)*3] == True)
+                            self.num_update(
+                                (cell[0][0], cell[1][0]), i + 1)
+
+                            update_true()
+                            self.count += 1
+                            print(
+                                f"Solved {self.count} cells via box elimination")
 
             # Might need to make two versions of self.duces because a
             #   row duce and column duce can overlap in the compression
@@ -191,10 +234,12 @@ class Solution():
                 # Would need to do work/research to find
                 #   combinations of duces and truces that lead to
                 # three different cells that can only be those three numbers
-
-        if backtracking and np.any(self.board == 0):
-            self.backtrack(self.board)
-            print("   --Backtracked--")
+        if np.any(self.board == 0):
+            if backtracking:
+                self.backtrack(self.board)
+                print("   --Backtracked--")
+            else:
+                print(" Currently Unsolvable")
 
     def backtrack(self, board: np.ndarray) -> bool:
         # Find the next empty cell
