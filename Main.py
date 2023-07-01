@@ -1,5 +1,4 @@
 # TODO:
-#  Fix box solve
 #  larger update loop with nested loops with increasingly tolling solves
 #  Add duces
 #  Add double duces
@@ -25,15 +24,15 @@ def main():
     #           '000060080', '307802040', '153489000', '008000000', '009000804']
     # for i, level in enumerate(medium):
     #     game.row_impliment(level, i)
-    game.board = np.array([[0, 3, 1, 6, 7, 0, 0, 0, 0],
-                           [7, 9, 0, 0, 0, 0, 0, 3, 0],
-                           [0, 0, 0, 0, 1, 3, 5, 7, 0],
-                           [0, 8, 0, 5, 3, 0, 9, 0, 0],
-                           [0, 0, 0, 0, 6, 0, 0, 8, 0],
-                           [3, 0, 7, 8, 0, 2, 0, 4, 0],
-                           [1, 5, 3, 4, 8, 9, 0, 0, 0],
-                           [0, 0, 8, 0, 0, 0, 0, 0, 0],
-                           [0, 0, 9, 0, 0, 0, 8, 0, 4]])
+    game.board = np.array([[1, 7, 0, 2, 3, 4, 5, 6, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                           [5, 3, 0, 0, 0, 0, 0, 0, 0],
+                           [6, 2, 0, 0, 0, 0, 0, 0, 0],
+                           [0, 1, 4, 0, 0, 0, 0, 9, 0]])
 
     game.solve(backtracking=False)
     print(f"\n      -Solution-\n{game}")
