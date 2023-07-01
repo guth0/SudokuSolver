@@ -34,7 +34,7 @@ def is_valid_set(nums):
     seen = set()
     for num in nums:
         if num != '.':
-            if num in seen:
+            if num in seen and num != 0:
                 return False
             seen.add(num)
     return True
@@ -87,13 +87,10 @@ class Solution():
     def num_update(self, coordinates: tuple[int, int], num: int):
         self.board[coordinates] = num
         self.validity_update(num, coordinates)
+        self.count += 1
+        print(f"Cell #{self.count} -- Solveable = {is_solvable(self)}")
 
     def solve(self, backtracking: bool = True):
-
-        def update_true():
-            root_update = True
-            update = True
-            do_duces = True
 
         compressed_cell = np.zeros((9, 9), dtype=int)
         compressed_row = np.zeros((9, 9), dtype=int)
@@ -117,7 +114,7 @@ class Solution():
                         x, y = cell_solve[0][i], cell_solve[1][i]
                         self.num_update((x, y),
                                         np.where(self.validity[:, x, y] != 0)[0][0] + 1)
-                        update_true()
+                        root_update, update, do_duces = True, True, True
 
                 # Only one valid position in column
                 # Each row is a level, each column is a row
@@ -130,7 +127,7 @@ class Solution():
                         z, y = row_solve[0][i], row_solve[1][i]
                         self.num_update(
                             (np.where(self.validity[z, :, y] != 0)[0][0], y), z + 1)
-                        update_true()
+                        root_update, update, do_duces = True, True, True
 
                 # Only one valid position in row
                 # Each row is a level, each column is a column
@@ -143,16 +140,11 @@ class Solution():
                         z, x = column_solve[0][i], column_solve[1][i]
                         self.num_update(
                             (x, np.where(self.validity[z, x, :] != 0)[0][0]), z + 1)
-                        update_true()
+                        root_update, update, do_duces = True, True, True
 
-            update = False
+            update = True
             while update:
                 update = False
-
-                '''BROKEN'''
-                # For some reason there are 2 spots where 1 wants to be in the meidum difficulty
-
-                # Only one valid positon in a box
                 for i in range(9):
                     compressed_box = count_box_nonzeros(self.validity[i])
                     box_solve = np.where(compressed_box == 1)
@@ -163,12 +155,9 @@ class Solution():
                             cell = np.where(
                                 self.validity[i, x*3:(x+1)*3, y*3:(y+1)*3] == True)
                             self.num_update(
-                                (cell[0][0], cell[1][0]), i + 1)
+                                (cell[0][0] + x*3, cell[1][0] + y*3), i + 1)
 
-                            update_true()
-                            self.count += 1
-                            print(
-                                f"Solved {self.count} cells via box elimination")
+                            root_update, update, do_duces = True, True, True
 
             # Might need to make two versions of self.duces because a
             #   row duce and column duce can overlap in the compression
@@ -178,7 +167,7 @@ class Solution():
             #   multiply it by compressed_row and compressed_column
             # Try to do np.any(all the rows in self.duces) then multiply
             # might get rid of do_duces
-
+            do_duces = False
             if do_duces and (np.any(compressed_row == 2) or np.any(compressed_column == 2)):
 
                 compressed_row = np.einsum(
@@ -265,3 +254,29 @@ class Solution():
         if (board[box_row:box_row+3, box_col:box_col+3] == num).any():
             return False
         return True
+
+
+# DEBUG TOOLS
+
+# CHECK IF BOARD MATCHES WITH VALIDITY
+def is_valid_validity(self):
+    thing = np.ones((9, 9, 9), dtype=bool)
+    for x in range(9):
+        for y in range(9):
+            num = self.board[x, y]
+            if num != 0:
+                thing[num - 1, x, :] = False
+                thing[num - 1, :, y] = False
+                thing[:, x, y] = False
+                xbox, ybox = x // 3 * 3, y // 3 * 3
+                thing[num - 1, xbox:xbox + 3, ybox:ybox + 3] = False
+
+    return (np.array_equal(thing, self.validity))
+
+
+# CHECK IF BOARD IS SOLVABLE
+def is_solvable(self):
+    array0 = self.board.copy()
+    self.backtrack(array0)
+    self.is_valid
+    return (is_valid_sudoku(array0) and not np.any(array0 == 0))
