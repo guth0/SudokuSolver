@@ -167,71 +167,42 @@ class Solution():
             #   multiply it by compressed_row and compressed_column
             # Try to do np.any(all the rows in self.duces) then multiply
             # might get rid of do_duces
-            do_duces = True
             if do_duces:
-                for i in range(9):
+                do_duces = False
+                for z in range(9):
                     compressed_box = count_box_nonzeros(
-                        self.validity[i] * self.duces[i])
+                        self.validity[z] * self.duces[z])
                     duces_solve = np.where(compressed_box == 2)
                     size = duces_solve[0].size
                     if size:
                         for j in range(size):
                             x, y = duces_solve[0][j], duces_solve[1][j]
-                            duce_cells = np.where(
-                                self.validity[i, x*3:(x+1)*3, y*3:(y+1)*3] == True)
-                            # if np.all(duce_cells[0]), then it is a VERTICAL??? duce
-                            # if np.all(duce_cells[1]), then it is a VERTICAL??? duce
-                            # CAN NOT be both
+                            x_cells, y_cells = np.where(
+                                self.validity[z, x*3:(x+1)*3, y*3:(y+1)*3] == True)
 
-                do_duces = False
+                            if np.all(x_cells):
+                                self.validity[z, x_cells[0], :] = False
 
-                compressed_row_duces = np.einsum(
-                    "ijk -> ik", self.validity.astype(int) * self.duces)
-                row_duces = np.where(compressed_row_duces == 2)
-                size = row_duces[0].size
-                if size:
-                    for i in range(size):
-                        z, y = row_duces[0][i], row_duces[1][i]
-                        duce = np.where(self.validity[z, :, y] == True)
+                            elif np.all(y_cells):
+                                self.validity[z, :, y_cells[0]] = False
 
-                        # Check if they are in the same box
-                        if duce[0][0]//3 == duce[0][1]//3:
-                            self.validity[z, :, y] = False
-                            self.validity[z, duce[0][0], y] = True
-                            self.validity[z, duce[0][1], y] = True
-                            root_update, update, do_duces = True, True, True
+                            else:
+                                continue
+                            dx, dy = x*3, y*3
 
-                            self.count += 1
-                            print(f"Duce #{self.count} --> {z, y = }")
+                            self.validity[z, x_cells[0] +
+                                          dx, y_cells[0] + dy] = True
+                            self.validity[z, x_cells[1] +
+                                          dx, y_cells[1] + dy] = True
 
-                            # Put onto duces array
-                            self.duces[z, duce[0][0], y] = False
-                            self.duces[z, duce[0][1], y] = False
-                            # Add to validity
-
-                compressed_column_duces = np.einsum(
-                    "ijk -> ij", self.validity.astype(int) * self.duces)
-                column_duces = np.where(compressed_column_duces == 2)
-                size = column_duces[0].size
-                if size:
-                    for i in range(size):
-                        z, x = column_duces[0][i], column_duces[1][i]
-                        duce = np.where(self.validity[z, x, :] == True)
-
-                        # Check if they are in the same box
-                        if duce[0][0]//3 == duce[0][1]//3 and self.duces[z, x, duce[0][0]] == False:
-                            self.validity[z, x, :] = False
-                            self.validity[z, x, duce[0][0]] = True
-                            self.validity[z, x, duce[0][1]] = True
-                            root_update, update, do_duces = True, True, True
+                            self.duces[z, x_cells[0] + dx,
+                                       y_cells[0] + dy] = False
+                            self.duces[z, x_cells[1] + dx,
+                                       y_cells[1] + dy] = False
 
                             self.count += 1
-                            print(f"Duce #{self.count} --> {z, x = }")
-
-                            # Put onto duces array
-                            self.duces[z, x, duce[0][0]] = False
-                            self.duces[z, x, duce[0][1]] = False
-                            # Add to validity
+                            print(f"Duce #{self.count} --> {z, x, y = }")
+                            root_update, update = True, True
 
                 # duces that are ontop of eachother are to be done here
                 # look at compressed_row and compressed_column and
@@ -275,6 +246,11 @@ class Solution():
         box_col = col - (col % 3)
         if (board[box_row:box_row+3, box_col:box_col+3] == num).any():
             return False
+
+        # Might need to be removed
+        if (self.validity[num, row, col] == False):
+            return False
+
         return True
 
 
